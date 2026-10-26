@@ -1,0 +1,10 @@
+# Editor settings (may contain credentials)
+.vscode/
+.idea/
+
+# Secrets / local config
+.env
+.env.*
+*.local
+*.pem
+*.key
