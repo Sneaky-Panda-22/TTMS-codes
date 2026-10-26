@@ -1,34 +1,59 @@
 # TTMS-codes
 
-SQL Server (T-SQL) scripts and practical reference material for TTMS.
+Schema, seed data, and reference scripts for **TTMS** — a table tennis gear & setup management database.
 
 ## Contents
 
 | File | Description |
 | --- | --- |
-| `TTMS_Phase3.sql` | Phase 3 DDL illustrations — create tables, indexes, constraints, views, and related objects. |
-| `TTMS.session.sql` | Working session script with hands-on queries, exercises, and experiments against the `TTMS` database. |
+| `creation.sql` | MySQL schema — creates the `Player`, `Blade`, `Rubber`, `Glue`, and `Setup` tables. |
+| `inserting.sql` | Seed data as batch `INSERT` statements for the five tables, in FK-safe order. |
+| `TTMS_Data_Generator.py` | Python script that generates the seed data (uses `Faker`, fixed seed for reproducible output). |
+| `part3.sql` | T-SQL practice script — DDL examples plus stored procedures against the `TTMS` database. |
 
 ## Prerequisites
 
-- Microsoft SQL Server (or Azure SQL) with a database named `TTMS`
-- SQL Server Management Studio, Azure Data Studio, or the `sqlcmd` CLI
+- **MySQL 8+** for `creation.sql` and `inserting.sql`
+- **SQL Server** for `part3.sql`
+- **Python 3.9+** with `faker` (`pip install faker`) to run the generator
 
 ## Usage
 
-Open the scripts in your SQL client and run them against the `TTMS` database. `TTMS_Phase3.sql` starts with `USE TTMS;`, so the database must exist before executing it.
+### 1. Create the schema
 
-> Scripts may create, alter, or drop objects. Review them before running against anything you care about.
+```sql
+SOURCE creation.sql;
+```
+
+### 2. Load the seed data
+
+```sql
+SOURCE inserting.sql;
+```
+
+### 3. Regenerate the seed data (optional)
+
+```bash
+pip install faker
+python TTMS_Data_Generator.py
+```
+
+This writes `ttms_seed_data.sql` to the current directory. The script uses `SEED = 42`, so running it twice produces identical data.
+
+### 4. Run the T-SQL reference script
+
+Open `part3.sql` in SQL Server Management Studio or Azure Data Studio and execute it against a database named `TTMS`.
+
+> These scripts create and drop objects. Review them before running against anything you care about.
 
 ## Repository layout
 
 ```
 TTMS-codes/
-├── TTMS_Phase3.sql
-├── TTMS.session.sql
+├── README.md
+├── creation.sql
+├── inserting.sql
+├── part3.sql
+├── TTMS_Data_Generator.py
 └── .gitignore
 ```
-
-## License
-
-No license specified yet. All rights reserved by the author unless stated otherwise.
