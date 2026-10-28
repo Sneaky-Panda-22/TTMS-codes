@@ -36,6 +36,8 @@ VALUES ('Demo Player', 'offensive', 'shakehand');
 
 SELECT * FROM Player WHERE NAME = 'Demo Player';
 
+select model,price from Blade where blade_id = 1;
+
 -- UPDATE
 UPDATE Blade
 SET price = price + 100
@@ -53,22 +55,43 @@ WHERE name = 'Demo Player';
 -- Comparison and logical operators
 
 -- Find no. of offensive players who use the shakehand grip:
-SELECT * FROM Player WHERE playing_style = 'offensive' AND grip_type = 'shakehand';
+SELECT * FROM Player WHERE playing_style = 'offensive' AND grip_type = 'shakehand' LIMIT 10;
 
 -- Find blades costing more than ₹3,000:
-SELECT * FROM Blade WHERE price > 3000;
+SELECT COUNT(*) FROM Blade WHERE price > 3000;
+-- price < 2000
+SELECT brand, model, price
+FROM Blade
+WHERE price < 2000;
 
 -- IN and NOT IN
 -- Find players with either an offensive or defensive playing style:
-SELECT * FROM Player WHERE playing_style IN ('offenisve','defensive');
+SELECT COUNT(*) FROM Player WHERE playing_style IN ('offensive','defensive');
+
+
+-- Find blades whose material is neither carbon nor wood.
+SELECT blade_id, brand, model, material
+FROM Blade
+WHERE material NOT IN ('Carbon', 'Wood')
+LIMIT 10;
 
 -- BETWEEN
 -- Find blades within a price range 2000 and 5000:
-SELECT * FROM Blade WHERE price BETWEEN 2000 AND 5000;
+SELECT blade_id,brand,model,price FROM Blade WHERE price BETWEEN 2000 AND 5000;
+
+-- Find rubbers priced between ₹500 and ₹2000.
+SELECT rubber_id, brand, model, price
+FROM Rubber
+WHERE price BETWEEN 500 AND 2000;
 
 -- LIKE
 -- Find players whose names begin with 'A':
 SELECT * FROM Player WHERE name LIKE 'A%';
+
+-- Find rubber models containing the word Hurricane.
+SELECT rubber_id, brand, model
+FROM Rubber
+WHERE model LIKE '%Hurricane%';
 
 -- IS NULL
 -- Find equipment whose material has not been recorded:
@@ -77,33 +100,60 @@ SELECT * FROM Blade WHERE material IS NULL;
 -- EXISTS
 -- Find players who have at least one recorded setup:
 SELECT * FROM Player AS p WHERE EXISTS (SELECT 1 FROM Setup s WHERE s.player_id = p.player_id);
-
+-- Find blades that are used in at least one setup.
+SELECT b.blade_id, b.brand, b.model
+FROM Blade b
+WHERE EXISTS (
+    SELECT 1
+    FROM Setup s
+    WHERE s.blade_id = b.blade_id
+);
 
 
 -- Arithmetic operators
 -- Display what will be the price of each glue after incrementing the price by 10%:
 SELECT name,price as old_price,price*1.1 AS new_price FROM Glue;
 
-
+-- Calculate the price of each blade after applying a 10% discount.
+SELECT blade_id, brand, model, price,
+       ROUND(price * 0.90, 2) AS discounted_price
+FROM Blade
+LIMIT 10;
 
 -- Aggregate functions
 -- find the total number of players, total inventory cost,average blade cost,cheapest blade,most expensixe blade
 SELECT COUNT(*) AS total_blades FROM Blade;
 SELECT COUNT(*) AS total_blades, SUM(price) AS total_blade_value, AVG(price) AS average_blade_price, MIN(price) AS cheapest_blade, MAX(price) AS most_expensive_blad FROM Blade;
 
+-- Query 1: Count the players
+SELECT COUNT(*) AS total_players
+FROM Player;
+
+-- Query 2: Count the setups
+SELECT COUNT(*) AS total_setups
+FROM Setup;
+
+
 -- GROUP BY
 -- calculate the number of players for each playing style:
 SELECT playing_style, COUNT(*) AS player_count FROM Player GROUP BY playing_style;
+-- Count the number of setups recorded for each player
+SELECT player_id, COUNT(*) AS setup_count
+FROM Setup
+GROUP BY player_id;
 
 
 -- Numeric functions
 SELECT ROUND(AVG(price), 2) AS average_price,CEIL(AVG(price)) AS rounded_up_average,FLOOR(AVG(price)) AS rounded_down_average FROM Blade;
 
+SELECT ROUND(AVG(price), 2) AS average_blade_price
+FROM Blade;
+
+SELECT ROUND(AVG(price), 2) AS average_rubber_price
+FROM Rubber;
+
 -- Date and time functions
 SELECT setup_id,created_at,YEAR(created_at) AS setup_year,MONTH(created_at) AS setup_month,DATE(created_at) AS setup_date FROM Setup LIMIT 10;
-
--- string functions
-SELECT name,UPPER(name) AS uppercase_name,LOWER(name) AS lowercase_name,LENGTH(name) AS name_length,SUBSTRING(name, 1, 5) AS first_five_characters,CONCAT('Player: ', name) AS player_label,TRIM(name) AS trimmed_name FROM Player LIMIT 10;
 
 -- UNION and UNION ALL
 SELECT brand FROM Blade UNION SELECT brand FROM Rubber;
@@ -204,3 +254,31 @@ END
 call FindPlayersUsingBlade(1);
 
 
+-- Find a player's total equipment cost
+CREATE PROCEDURE GetPlayerSetupCosts(IN p_player_id INT)
+BEGIN
+    SELECT
+        P.name AS Player_Name,
+        S.setup_id AS Setup_ID,
+        B.price AS Blade_Price,
+        RF.price AS Forehand_Rubber_Price,
+        RB.price AS Backhand_Rubber_Price,
+        G.price AS Glue_Price,
+        (
+            B.price + RF.price + RB.price + G.price
+        ) AS Total_Equipment_Cost
+    FROM Setup S
+    JOIN Player P
+        ON S.player_id = P.player_id
+    JOIN Blade B
+        ON S.blade_id = B.blade_id
+    JOIN Rubber RF
+        ON S.forehand_rubber_id = RF.rubber_id
+    JOIN Rubber RB
+        ON S.backhand_rubber_id = RB.rubber_id
+    JOIN Glue G
+        ON S.glue_id = G.glue_id
+    WHERE P.player_id = p_player_id;
+END
+
+call GetPlayerSetupCosts(1);
