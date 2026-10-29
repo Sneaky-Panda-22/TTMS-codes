@@ -109,6 +109,15 @@ WHERE EXISTS (
     WHERE s.blade_id = b.blade_id
 );
 
+-- string
+-- Display all blade brands in uppercase.
+SELECT blade_id, brand, UPPER(brand) AS uppercase_brand FROM Blade LIMIT 10;
+
+-- Display each rubber's brand and model together as a single name.
+SELECT rubber_id,
+       CONCAT(brand, ' ', model) AS rubber_name
+FROM Rubber
+LIMIT 10;
 
 -- Arithmetic operators
 -- Display what will be the price of each glue after incrementing the price by 10%:
